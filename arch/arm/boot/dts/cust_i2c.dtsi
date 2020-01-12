@@ -50,9 +50,9 @@
 		reg = <0x68>;
 	};
 
-	gsensor@18 {
+	gsensor@4c {
 		compatible = "mediatek,gsensor";
-		reg = <0x18>;
+		reg = <0x4c>;
 	};
 
 	alsps@60 {
@@ -69,4 +69,14 @@
 		compatible = "mediatek,strobe_main";
 		reg = <0x63>;
 	};
+
 };
+
+&i2c3 {
+	ext_buck@6b {
+		compatible = "mediatek,ext_buck";
+		reg = <0x6b>;
+	};
+
+};
+
