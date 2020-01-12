@@ -23,63 +23,23 @@ LCM_DRIVER *lcm_driver_list[] = {
 #if defined(MTK_LCM_DEVICE_TREE_SUPPORT)
 	&lcm_common_drv,
 #else
-#if defined(ILI9806E_FWVGA_DSI_VDO_TXD)
-	&ili9806e_fwvga_dsi_vdo_TXD_lcm_drv,
+//begin-20150612-fangjie-add-lcm driver for pixi4-4 WVGA 800*480
+#if defined(ILI9806E_WVGA_DSI_VDO_HOLITECH_PIXI44)
+	&ili9806e_wvga_dsi_vdo_Holitech_lcm_drv_pixi44,
 #endif
-#if defined(HX8379C_FWVGA_DSI_VDO_TDT)
-	&hx8379c_fwvga_dsi_vdo_TDT_lcm_drv,
+#if defined(FL10802_WVGA_DSI_VDO_TXD_PIXI44)
+	&fl10802_wvga_dsi_vdo_TXD_lcm_drv_pixi44,
 #endif
-#if defined(HCT_OTM1285A_DSI_VDO_HD_BOE)
-&hct_otm1285a_dsi_vdo_hd_boe,
+#if defined(HX8379C_WVGA_DSI_VDO_TDT_PIXI44)
+	&hx8379c_wvga_dsi_vdo_TDT_lcm_drv_pixi44,
 #endif
-#if defined(HCT_ILI9881_DSI_VDO_HD_CPT)
-&hct_ili9881_dsi_vdo_hd_cpt,
-#endif
-#if defined(HCT_HX8394F_DSI_VDO_HD_CMI)
-&hct_hx8394f_dsi_vdo_hd_cmi,
-#endif
-
-
-#if defined(HCT_OTM1282_DSI_VDO_HD_AUO)
-&hct_otm1282_dsi_vdo_hd_auo,
-#endif
-#if defined(HCT_RM68200_DSI_VDO_HD_CPT)
-&hct_rm68200_dsi_vdo_hd_cpt,
-#endif
-#if defined(HCT_NT35521S_DSI_VDO_HD_BOE_50_XLD)
-&hct_nt35521s_dsi_vdo_hd_boe_50_xld,
-#endif
-#if defined(HCT_HX8394D_DSI_VDO_HD_CMI)
-&hct_hx8394d_dsi_vdo_hd_cmi,
-#endif
-#if defined(HCT_OTM1282A_DSI_VDO_HD_AUO)
-	&hct_otm1282a_dsi_vdo_hd_auo,
-#endif
-#if defined(HCT_HX8394F_DSI_VDO_HD_CMI)
-	&hct_hx8394f_dsi_vdo_hd_cmi,
-#endif
-#if defined(HCT_RM68200_DSI_VDO_HD_CPT)
-	&hct_rm68200_dsi_vdo_hd_cpt,
-#endif
-#if defined(HCT_ILI9881_DSI_VDO_HD_CPT)
-	&hct_ili9881_dsi_vdo_hd_cpt,
-#endif
-#if defined(HCT_RM68200_DSI_VDO_HD_AUO)
-	&hct_rm68200_dsi_vdo_hd_auo,
-#endif
-#if defined(HCT_NT35521_DSI_VDO_HD_BOE)
-	&hct_nt35521_dsi_vdo_hd_boe,
-#endif
-#if defined(HCT_OTM1284A_DSI_VDO_HD_BOE)
-	&hct_otm1284a_dsi_vdo_hd_boe,
-#endif
-#if defined(NT35521_DSI_6735_H)
-	&nt35521_dsi_6735_H,
-#endif
-
-
-
-
+#if defined(JD9161B_WVGA_DSI_VDO_TXD_PIXI44)
+	&jd9161b_wvga_dsi_vdo_TXD_lcm_drv_pixi44,
+#endif  
+#if defined(JD9161B_WVGA_DSI_VDO_HOLITECH_PIXI44)
+	&jd9161b_wvga_dsi_vdo_Holitech_lcm_drv_pixi44,
+#endif  
+//end-20150612-fangjie-add-lcm driver for pixi4-4 WVGA 800*480
 #if defined(OTM1284A_HD720_DSI_VDO_TM)
 	&otm1284a_hd720_dsi_vdo_tm_lcm_drv,
 #endif
@@ -498,7 +458,6 @@ LCM_DRIVER *lcm_driver_list[] = {
 #if defined(HX8392A_DSI_CMD_3LANE_QHD)
 	&hx8392a_dsi_cmd_3lane_qhd_lcm_drv,
 #endif
-
 #if defined(HX8392A_DSI_CMD_WVGA)
 	&hx8392a_dsi_cmd_wvga_lcm_drv,
 #endif
@@ -1016,7 +975,12 @@ unsigned char lcm_name_list[][128] = {
 };
 #endif
 
+#define LCM_COMPILE_ASSERT(condition) LCM_COMPILE_ASSERT_X(condition, __LINE__)
+#define LCM_COMPILE_ASSERT_X(condition, line) LCM_COMPILE_ASSERT_XX(condition, line)
+#define LCM_COMPILE_ASSERT_XX(condition, line) char assertion_failed_at_line_##line[(condition) ? 1 : -1]
+
 unsigned int lcm_count = sizeof(lcm_driver_list) / sizeof(LCM_DRIVER *);
+LCM_COMPILE_ASSERT(0 != sizeof(lcm_driver_list) / sizeof(LCM_DRIVER *));
 #if defined(NT35520_HD720_DSI_CMD_TM) | defined(NT35520_HD720_DSI_CMD_BOE) | \
 	defined(NT35521_HD720_DSI_VDO_BOE) | defined(NT35521_HD720_DSI_VIDEO_TM)
 static unsigned char lcd_id_pins_value = 0xFF;

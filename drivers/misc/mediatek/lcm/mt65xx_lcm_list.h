@@ -6,23 +6,6 @@
 #if defined(MTK_LCM_DEVICE_TREE_SUPPORT)
 extern LCM_DRIVER lcm_common_drv;
 #else
-
-extern LCM_DRIVER hct_otm1285a_dsi_vdo_hd_boe;
-extern LCM_DRIVER hct_otm1282a_dsi_vdo_hd_auo;
-extern LCM_DRIVER hct_ili9881_dsi_vdo_hd_cpt;
-extern LCM_DRIVER hct_hx8394f_dsi_vdo_hd_cmi;
-extern LCM_DRIVER hct_otm1282_dsi_vdo_hd_auo;
-extern LCM_DRIVER hct_rm68200_dsi_vdo_hd_cpt;
-extern LCM_DRIVER hct_nt35521s_dsi_vdo_hd_boe_50_xld;
-extern LCM_DRIVER hct_hx8394d_dsi_vdo_hd_cmi;
-extern LCM_DRIVER hct_rm68200_dsi_vdo_hd_auo;
-extern LCM_DRIVER hct_nt35521_dsi_vdo_hd_boe;
-extern LCM_DRIVER hct_otm1284a_dsi_vdo_hd_boe;
-extern LCM_DRIVER nt35521_dsi_6735_H;
-
-
-extern LCM_DRIVER ili9806e_fwvga_dsi_vdo_TXD_lcm_drv;
-extern LCM_DRIVER hx8379c_fwvga_dsi_vdo_TDT_lcm_drv;
 extern LCM_DRIVER otm1282a_hd720_dsi_vdo_60hz_lcm_drv;
 extern LCM_DRIVER otm1282a_hd720_dsi_vdo_lcm_drv;
 extern LCM_DRIVER vvx10f008b00_wuxga_dsi_vdo_lcm_drv;
@@ -253,6 +236,14 @@ extern LCM_DRIVER r69429_wqxga_dsi_vdo_lcm_drv;
 extern LCM_DRIVER hx8394c_wxga_dsi_vdo_lcm_drv;
 extern LCM_DRIVER nt35595_truly_fhd_dsi_vdo_lcm_drv;
 extern LCM_DRIVER b080uan01_2_wuxga_dsi_vdo_lcm_drv;
+//begin-20150612-fangjie-add-lcm driver for pixi4-4 WVGA 800*480
+extern LCM_DRIVER ili9806e_wvga_dsi_vdo_Holitech_lcm_drv_pixi44;
+extern LCM_DRIVER fl10802_wvga_dsi_vdo_TXD_lcm_drv_pixi44;
+extern LCM_DRIVER hx8379c_wvga_dsi_vdo_TDT_lcm_drv_pixi44;
+extern LCM_DRIVER jd9161b_wvga_dsi_vdo_TXD_lcm_drv_pixi44;
+extern LCM_DRIVER jd9161b_wvga_dsi_vdo_Holitech_lcm_drv_pixi44;
+//end-20150612-fangjie-add-lcm driver for pixi4-4 WVGA 800*480
+
 #endif
 
 #ifdef BUILD_LK
