@@ -22,8 +22,10 @@
 /* Linear Charging Threshold */
 #define V_PRE2CC_THRES	3400	/*mV*/
 #define V_CC2TOPOFF_THRES	4050
-#define RECHARGING_VOLTAGE	4275  //modify by jiayu.ding
-#define CHARGING_FULL_CURRENT	 150	/*mA*/ //old:100 modify-by-jiangjingjing
+#define RECHARGING_VOLTAGE	4275  //modify by jiangjingjing-
+//old:150	 jiangjingjing-modify-for-CV-stop-current-20151221-defect1190619-begin
+#define CHARGING_FULL_CURRENT	 200   /*mA*/ //old:100 modify-bu-jiangjingjing
+//old:150	 jiangjingjing-modify-for-CV-stop-current-20151221-defect1190619-end
 
 /* Charging Current Setting */
 /*#define CONFIG_USB_IF */
@@ -33,7 +35,7 @@
 
 #define USB_CHARGER_CURRENT	CHARGE_CURRENT_500_00_MA	/*500mA*/
 /*#define AC_CHARGER_CURRENT					CHARGE_CURRENT_650_00_MA*/
-#define AC_CHARGER_CURRENT	CHARGE_CURRENT_650_00_MA  //old:1000 modify-by-jiangjingjing
+#define AC_CHARGER_CURRENT	CHARGE_CURRENT_550_00_MA  //old:1000 modify-by-jiangjingjing
 #define NON_STD_AC_CHARGER_CURRENT	CHARGE_CURRENT_500_00_MA
 #define CHARGING_HOST_CHARGER_CURRENT	CHARGE_CURRENT_650_00_MA
 #define APPLE_0_5A_CHARGER_CURRENT	CHARGE_CURRENT_500_00_MA
@@ -54,7 +56,7 @@
 /* Tracking TIME */
 #define ONEHUNDRED_PERCENT_TRACKING_TIME	10	/* 10 second*/
 #define NPERCENT_TRACKING_TIME	20	/* 20 second*/
-#define SYNC_TO_REAL_TRACKING_TIME	60	/* 60 second*/
+#define SYNC_TO_REAL_TRACKING_TIME	60 //60 jiangjingjing modify-20160129	/* 60 second*/
 #define V_0PERCENT_TRACKING	3450	/*3450mV*/
 
 /* Battery Notify */
