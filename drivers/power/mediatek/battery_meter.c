@@ -46,7 +46,7 @@
 /* define */
 /* ============================================================ // */
 #define PROFILE_SIZE 4
-#define MTK_MULTI_BAT_PROFILE_SUPPORT
+
 static DEFINE_MUTEX(FGADC_mutex);
 
 int Enable_FGADC_LOG = 0;
@@ -179,7 +179,6 @@ struct timespec g_rtc_time_before_sleep, xts_before_sleep, g_sleep_total_time;
 signed int g_sw_vbat_temp = 0;
 struct timespec last_oam_run_time;
 
-signed int Used_rtc_fg_soc = 0;  // //add by jiayu.ding for power off charge 20160406
 /* aging mechanism */
 #ifdef MTK_ENABLE_AGING_ALGORITHM
 
@@ -661,8 +660,8 @@ int __batt_meter_init_cust_data_from_dt(void)
 			battery_log(BAT_LOG_CRTI, "batt_temperature_table: addr: %d, val: %d\n",
 				    addr, val);
 		}
-		Batt_Temperature_Table[g_fg_battery_id][idx / 2].BatteryTemp = addr;
-		Batt_Temperature_Table[g_fg_battery_id][idx / 2].TemperatureR = val;
+		Batt_Temperature_Table[idx / 2].BatteryTemp = addr;
+		Batt_Temperature_Table[idx / 2].TemperatureR = val;
 
 		idx++;
 		if (idx >= num * 2)
@@ -882,25 +881,23 @@ int BattThermistorConverTemp(int Res)
 	int RES1 = 0, RES2 = 0;
 	int TBatt_Value = -200, TMP1 = 0, TMP2 = 0;
 
-	BATT_TEMPERATURE *batt_temperature_table = &Batt_Temperature_Table[g_fg_battery_id][0];
+	BATT_TEMPERATURE *batt_temperature_table = &Batt_Temperature_Table[g_fg_battery_id];
 
-	printk("jiayu.ding for g_fg_battery_id = %d\n", g_fg_battery_id);
-	
-	if (Res >= (batt_temperature_table+0)->TemperatureR) {
+	if (Res >= batt_temperature_table[0].TemperatureR) {
 		TBatt_Value = -20;
-	} else if (Res <= (batt_temperature_table +16)->TemperatureR) {
+	} else if (Res <= batt_temperature_table[16].TemperatureR) {
 		TBatt_Value = 60;
 	} else {
-		RES1 = (batt_temperature_table+0)->TemperatureR;
-		TMP1 = (batt_temperature_table+0)->BatteryTemp;
+		RES1 = batt_temperature_table[0].TemperatureR;
+		TMP1 = batt_temperature_table[0].BatteryTemp;
 
 		for (i = 0; i <= 16; i++) {
-			if (Res < (batt_temperature_table+i)->TemperatureR) {
-				RES1 = (batt_temperature_table+i)->TemperatureR;
-				TMP1 = (batt_temperature_table+i)->BatteryTemp;
+			if (Res < batt_temperature_table[i].TemperatureR) {
+				RES1 = batt_temperature_table[i].TemperatureR;
+				TMP1 = batt_temperature_table[i].BatteryTemp;
 			} else {
-				RES2 = (batt_temperature_table+i)->TemperatureR;
-				TMP2 = (batt_temperature_table+i)->BatteryTemp;
+				RES2 = batt_temperature_table[i].TemperatureR;
+				TMP2 = batt_temperature_table[i].BatteryTemp;
 				break;
 			}
 		}
@@ -1146,7 +1143,7 @@ int BattVoltToTemp(int dwVolt)
 
 	/* convert register to temperature */
 	sBaTTMP = BattThermistorConverTemp((int)TRes);
-	
+
 	return sBaTTMP;
 }
 
@@ -1199,14 +1196,7 @@ int force_get_tbat(kal_bool update)
 			}
 #endif
 
-			bat_temperature_val = BattVoltToTemp(bat_temperature_volt);	
-/**********begin-2016-03-39-modify by jiayu.ding for Temp check***********/
-			if ((bat_temperature_val > 50) && (g_fg_battery_id == 0))
-			{
-				bat_temperature_val = bat_temperature_val -4;
-			}
-		//	printk("jiayu.ding bat_temperature_val = %d\n", bat_temperature_val);
-/**********end-2016-03-39-modify by jiayu.ding for Temp check***********/
+			bat_temperature_val = BattVoltToTemp(bat_temperature_volt);
 		}
 #ifdef CONFIG_MTK_BIF_SUPPORT
 		battery_charging_control(CHARGING_CMD_GET_BIF_TBAT, &bat_temperature_val);
@@ -2019,13 +2009,32 @@ void sw_oam_init_v2(void)
 
 	/* use get_hw_ocv----------------------------------------------------------------- */
 	ret = battery_meter_ctrl(BATTERY_METER_CMD_GET_HW_OCV, &gFG_voltage);
+	/*modify by jingjing.jiang.hz for power on swocv/hwocv offset-20160308-begin*/
+	#ifdef POWERON_BOOTIMG_VBAT_OFFSET	
+	    if (bat_is_charger_exist() == KAL_TRUE)
+           {
+              if(gFG_voltage>=4185)
+              {
+                gFG_voltage=gFG_voltage;
+              }
+	       else if(gFG_voltage>=3890)
+	       {
+                  gFG_voltage=gFG_voltage-100;
+	       }
+	        else 
+	       {  
+                 gFG_voltage=gFG_voltage-120;
+	       }
+	    }
+	 
+     #endif
+	/*modify by jingjing.jiang.hz for power on swocv/hwocv offset-20160308-end*/
 	gFG_capacity_by_v = fgauge_read_capacity_by_v(gFG_voltage);
 
 #if defined(CONFIG_POWER_EXT)
 	g_rtc_fg_soc = gFG_capacity_by_v;
 #else
 	g_rtc_fg_soc = get_rtc_spare_fg_value();
-	printk("jiayu.ding for rtc = %d\n", g_rtc_fg_soc);
 #endif
 
 	ret = battery_meter_ctrl(BATTERY_METER_CMD_GET_BATTERY_PLUG_STATUS, &plugout_status);
@@ -2038,25 +2047,13 @@ void sw_oam_init_v2(void)
 			gFG_capacity_by_v = g_rtc_fg_soc;
 			type = 2;
 		}
-	} else {    
-	/*-bengin-2016-04-06-add by jiayu for power off charge power jump*/
-			if (Used_rtc_fg_soc == 0)
-			{
-				gFG_capacity_by_v = gFG_capacity_by_v_init;	
-			}
-			else
-			{
-				gFG_capacity_by_v = g_rtc_fg_soc;
-			}
-			gFG_voltage = g_booting_vbat;
-	/*-end-2016-04-06-add by jiayu for power off charge power jump*/
-			
+	} else {
 		if ((abs(gFG_capacity_by_v - g_rtc_fg_soc) >
 		     batt_meter_cust_data.cust_poweron_delta_capacity_tolrance)
 		    && (abs(gFG_capacity_by_v - gFG_capacity_by_v_init) <
 			abs(gFG_capacity_by_v_init - g_rtc_fg_soc))) {
 			if (abs(gFG_capacity_by_v - gFG_capacity_by_v_init) >
-			    batt_meter_cust_data.cust_poweron_delta_hw_sw_ocv_capacity_tolrance||gFG_capacity_by_v<=15) {
+			    batt_meter_cust_data.cust_poweron_delta_hw_sw_ocv_capacity_tolrance) {
 				gFG_capacity_by_v = gFG_capacity_by_v_init;
 				type = 3;
 			} else {
@@ -2077,7 +2074,7 @@ void sw_oam_init_v2(void)
 		}
 	}
 
-	printk("jiayu.ding type = %d\n",type);
+
 	bm_print(BM_LOG_CRTI,
 		 "[sw_oam_init_v2] swocv:%d(%d,%d) hwocv:%d(%d) rtc:%d plugout_status=%d chr:%d type:%d f:%d %d %d\n",
 		 g_booting_vbat, vbat_capacity,gFG_capacity_by_v_init, gFG_voltage, gFG_capacity_by_v,
@@ -2226,8 +2223,6 @@ if (((g_rtc_fg_soc != 0)
 		    || get_boot_reason() == BR_TOOL_BY_PASS_PWK || get_boot_reason() == BR_2SEC_REBOOT
 		    || get_boot_mode() == RECOVERY_BOOT))) {
 		gFG_capacity_by_v = g_rtc_fg_soc;
-		Used_rtc_fg_soc = 1;
-		printk("jiayu used g_rtc_fg_soc!!\n");
 	}
 #endif
 #endif
@@ -2307,62 +2302,82 @@ signed int mtk_imp_tracking(signed int ori_voltage, signed int ori_current, sign
 void oam_init(void)
 {
 	int ret = 0;
-	signed int vbat_capacity = 0;
+
 	kal_bool charging_enable = KAL_FALSE;
 
 	/*stop charging for vbat measurement */
 	battery_charging_control(CHARGING_CMD_ENABLE, &charging_enable);
 
-	Used_rtc_fg_soc = 0;   //add by jiayu.ding for power off charge 20160406
 	msleep(50);
 
 	g_booting_vbat = 5;	/* set avg times */
 	ret = battery_meter_ctrl(BATTERY_METER_CMD_GET_HW_OCV, &gFG_voltage);
 	ret = battery_meter_ctrl(BATTERY_METER_CMD_GET_ADC_V_BAT_SENSE, &g_booting_vbat);
 
-	printk("jiayu.ding HWocv = %d, SWocv = %d\n", gFG_voltage,g_booting_vbat);
+/*add by xiaopu.zhu for power on swocv offset*/
+	/*modify by jingjing.jiang.hz for power on swocv/hwocv offset-20160308-begin*/
+	#ifdef POWERON_BOOTIMG_VBAT_OFFSET
+         if (bat_is_charger_exist() == KAL_TRUE)
+         {  //hwocv offset
+	       if(gFG_voltage>=4185)
+              {
+                gFG_voltage=gFG_voltage;
+              }
+	       else if(gFG_voltage>=3890)
+	       {
+                  gFG_voltage=gFG_voltage-100;
+	       }
+	        else 
+	       {  
+                 gFG_voltage=gFG_voltage-120;
+	       }
+			
+		//swocv offset	
+		 if(g_booting_vbat>=3700)
+	       {
+                  g_booting_vbat=g_booting_vbat+60;
+	       }
+	        else if(g_booting_vbat<3555)
+	       {  
+                 g_booting_vbat=g_booting_vbat+120;
+	       }
+		else
+		{
+                 g_booting_vbat=g_booting_vbat+100;
+
+		}
+	   }
+      #endif
+	/*modify by jingjing.jiang.hz for power on swocv/hwocv offset-20160308-end*/
+  
 	gFG_capacity_by_v = fgauge_read_capacity_by_v(gFG_voltage);
 	vbat_capacity = fgauge_read_capacity_by_v(g_booting_vbat);
 
-	if (bat_is_charger_exist() == KAL_TRUE) {
+	/*add by xiaopu.zhu for power on swocv offset*/
+	//modify-by-jiangjingjing-use-hwocv-as-battery-capacity-when-battery-level-is up to 15%-20160108-begin-defect1192308
+	if (bat_is_charger_exist() == KAL_TRUE )
+	{
 		bm_print(BM_LOG_CRTI, "[oam_init_inf] gFG_capacity_by_v=%d, vbat_capacity=%d,\n",
 			 gFG_capacity_by_v, vbat_capacity);
-
+/*add by xiaopu.zhu for power on swocv offset*/
+	g_rtc_fg_soc = get_rtc_spare_fg_value();
+/*add by xiaopu.zhu for power on swocv offset*/
 		/* to avoid plug in cable without battery, then plug in battery to make hw soc = 100% */
 		/* if the difference bwtween ZCV and vbat is too large, using vbat instead ZCV */
-		if (((gFG_capacity_by_v == 100)
-		     && (vbat_capacity < batt_meter_cust_data.cust_poweron_max_vbat_tolrance))
-		    || (abs(gFG_capacity_by_v - vbat_capacity) > 0)) {
+/*modify by xiaopu.zhu for power on swocv offset*/
+		if (((gFG_capacity_by_v == 100) && (vbat_capacity < batt_meter_cust_data.cust_poweron_max_vbat_tolrance))
+		    || ((g_rtc_fg_soc==0)&&(abs(gFG_capacity_by_v - vbat_capacity) >=batt_meter_cust_data.cust_poweron_low_capacity_tolrance)) 
+			||((g_rtc_fg_soc!=0)&&((abs(gFG_capacity_by_v - vbat_capacity) >=batt_meter_cust_data.cust_poweron_low_capacity_tolrance)||
+			(abs(g_rtc_fg_soc - vbat_capacity) <=batt_meter_cust_data.cust_poweron_low_capacity_tolrance)))) {
 			bm_print(BM_LOG_CRTI,
 				 "[oam_init] fg_vbat=(%d), vbat=(%d), set fg_vat as vat\n",
 				 gFG_voltage, g_booting_vbat);
-		//begin-2016-03-23-add by jiayu.ding for power off charge
-			if (g_booting_vbat >= 3850)
-			{
-				/*
-				if (g_booting_vbat >= 4130)
-				{
-					gFG_voltage = gFG_voltage + 5;
-				}
-				else
-				{
-					gFG_voltage = g_booting_vbat + 70;
-				}
-				*/
-				gFG_voltage = g_booting_vbat + 70;
-			}
-			else
-			{
-				gFG_voltage = g_booting_vbat + 95;
-			}
-			gFG_capacity_by_v = fgauge_read_capacity_by_v(gFG_voltage);
-			g_booting_vbat = gFG_voltage;
-			printk("jiayu.ding used swocv gFG_voltage=%d, gFG_capacity_by_v = %d\n", gFG_voltage,gFG_capacity_by_v);
-			//gFG_voltage = g_booting_vbat;
-			//gFG_capacity_by_v = vbat_capacity;
-		//end-2016-03-23-add by jiayu.ding for power off charge
+
+			gFG_voltage = g_booting_vbat;
+			gFG_capacity_by_v = vbat_capacity;
 		}
 	}
+	//modify-by-jiangjingjing-use-hwocv-as-battery-capacity-when-battery-level-is up to 15%-20160108-end-defect1192308
 
 	gFG_capacity_by_v_init = gFG_capacity_by_v;
 
@@ -2500,7 +2515,7 @@ void oam_run(void)
 
 	gFG_columb = oam_car_2 / 10;	/* mAh */
 
-	if (((oam_i_1 < 0) || (oam_i_2 < 0))&&(BMT_status.charger_exist == KAL_TRUE))  //modify by jiayu for battery used 2016-02-24
+	if ((oam_i_1 < 0) || (oam_i_2 < 0))
 		gFG_Is_Charging = KAL_TRUE;
 	else
 		gFG_Is_Charging = KAL_FALSE;
@@ -4830,7 +4845,6 @@ static int battery_meter_resume(struct platform_device *dev)
 #if defined(SOC_BY_SW_FG)
 	signed int hw_ocv_after_sleep;
 #endif
-	signed int sleep_interval;
 	struct timespec rtc_time_after_sleep;
 #ifdef MTK_POWER_EXT_DETECT
 	if (KAL_TRUE == bat_is_ext_power())
@@ -4838,7 +4852,7 @@ static int battery_meter_resume(struct platform_device *dev)
 #endif
 
 	get_monotonic_boottime(&rtc_time_after_sleep);
-	sleep_interval = rtc_time_after_sleep.tv_sec - g_rtc_time_before_sleep.tv_sec;
+
 	g_sleep_total_time = timespec_add(g_sleep_total_time,
 		timespec_sub(rtc_time_after_sleep, g_rtc_time_before_sleep));
 	_g_bat_sleep_total_time = g_sleep_total_time.tv_sec;
