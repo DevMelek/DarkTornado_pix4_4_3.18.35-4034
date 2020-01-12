@@ -1,15 +1,13 @@
 /*
-* Copyright (C) 2015 MediaTek Inc.
-*
-* This program is free software; you can redistribute it and/or modify
-* it under the terms of the GNU General Public License version 2 as
-* published by the Free Software Foundation.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-* See http://www.gnu.org/licenses/gpl-2.0.html for more details.
-*/
+ *
+ *
+ * This file is subject to the terms and conditions of the GNU General Public
+ * License.  See the file COPYING in the main directory of this archive for
+ * more details.
+ *
+ * mt65xx leds driver
+ *
+ */
 
 #include <linux/module.h>
 #include <linux/platform_device.h>
@@ -39,8 +37,6 @@
 
 #include "leds_sw.h"
 #include "leds_hal.h"
-#include "ddp_pwm.h"
-#include "mtkfb.h"
 
 /* for LED&Backlight bringup, define the dummy API */
 #ifndef CONFIG_MTK_PMIC
@@ -50,10 +46,17 @@ u16 pmic_set_register_value(u32 flagname, u32 val)
 }
 #endif
 
-int __weak mtkfb_set_backlight_level(unsigned int level)
+#ifndef CONFIG_MTK_VIDEOX
+static int disp_bls_set_backlight(int level_1024)
 {
 	return 0;
 }
+
+static int mtkfb_set_backlight_level(unsigned int level)
+{
+	return 0;
+}
+#endif
 
 #ifndef CONFIG_MTK_PWM
 s32 pwm_set_spec_config(struct pwm_spec_config *conf)
@@ -186,19 +189,13 @@ struct cust_mt65xx_led *get_cust_led_dtsi(void)
 		for (i = 0; i < MT65XX_LED_TYPE_TOTAL; i++) {
 
 			char node_name[32] = "mediatek,";
-			if (strlen(node_name) + strlen(leds_name[i]) + 1 > sizeof(node_name)) {
-				LEDS_DEBUG("buffer for %s%s not enough\n", node_name, leds_name[i]);
-				pled_dtsi[i].mode = 0;
-				pled_dtsi[i].data = -1;
-				continue;
-			}
 
 			pled_dtsi[i].name = leds_name[i];
 
 			led_node =
 			    of_find_compatible_node(NULL, NULL,
-						    strncat(node_name,
-							   leds_name[i], sizeof(node_name) - strlen(node_name) - 1));
+						    strcat(node_name,
+							   leds_name[i]));
 			if (!led_node) {
 				LEDS_DEBUG("Cannot find LED node from dts\n");
 				pled_dtsi[i].mode = 0;
@@ -328,7 +325,6 @@ int mt_led_set_pwm(int pwm_num, struct nled_setting *led)
 	struct pwm_spec_config pwm_setting;
 	int time_index = 0;
 
-	memset(&pwm_setting, 0, sizeof(struct pwm_spec_config));
 	pwm_setting.pwm_no = pwm_num;
 	pwm_setting.mode = PWM_MODE_OLD;
 
@@ -337,7 +333,6 @@ int mt_led_set_pwm(int pwm_num, struct nled_setting *led)
 	/* We won't choose 32K to be the clock src of old mode because of system performance. */
 	/* The setting here will be clock src = 26MHz, CLKSEL = 26M/1625 (i.e. 16K) */
 	pwm_setting.clk_src = PWM_CLK_OLD_MODE_32K;
-	pwm_setting.pmic_pad = 0;
 
 	switch (led->nled_mode) {
 	/* Actually, the setting still can not to turn off NLED. We should disable PWM to turn off NLED. */
@@ -366,10 +361,6 @@ int mt_led_set_pwm(int pwm_num, struct nled_setting *led)
 		pwm_setting.PWM_MODE_OLD_REGS.THRESH =
 		    (led->blink_on_time * 100) / (led->blink_on_time +
 						  led->blink_off_time);
-		break;
-	default:
-		LEDS_DEBUG("Invalid nled mode\n");
-		return -1;
 	}
 
 	pwm_setting.PWM_MODE_FIFO_REGS.IDLE_VALUE = 0;
@@ -492,6 +483,10 @@ int pmic_period_array[] = { 250, 500, 1000, 1250, 1666, 2000, 2500, 10000 };
 /* int pmic_freqsel_array[] = {99999, 9999, 4999, 1999, 999, 499, 199, 4, 0}; */
 int pmic_freqsel_array[] = { 0, 4, 199, 499, 999, 1999, 1999, 1999 };
 
+/*Begin ersen.shang for backlight control 20151029*/
+extern int disp_cust_set_backlight(int level_256);
+/*End   ersen.shang for backlight control 20151029*/
+
 static int find_time_index_pmic(int time_ms)
 {
 	int i;
@@ -510,8 +505,13 @@ int mt_led_blink_pmic(enum mt65xx_led_pmic pmic_type, struct nled_setting *led)
 
 	LEDS_DEBUG("led_blink_pmic: pmic_type=%d\n", pmic_type);
 
-	if (led->nled_mode != NLED_BLINK)
+	if ((pmic_type != MT65XX_LED_PMIC_NLED_ISINK0
+	     && pmic_type != MT65XX_LED_PMIC_NLED_ISINK1
+	     && pmic_type != MT65XX_LED_PMIC_NLED_ISINK2
+	     && pmic_type != MT65XX_LED_PMIC_NLED_ISINK3)
+	    || led->nled_mode != NLED_BLINK) {
 		return -1;
+	}
 
 	LEDS_DEBUG("LED blink on time = %d offtime = %d\n",
 		   led->blink_on_time, led->blink_off_time);
@@ -554,13 +554,14 @@ int mt_led_blink_pmic(enum mt65xx_led_pmic pmic_type, struct nled_setting *led)
 		pmic_set_register_value(PMIC_RG_ISINK3_CK_PDN, 0);
 		pmic_set_register_value(PMIC_RG_ISINK3_CK_SEL, 0);
 		pmic_set_register_value(PMIC_ISINK_CH3_MODE, ISINK_PWM_MODE);
-		pmic_set_register_value(PMIC_ISINK_CH3_STEP, ISINK_3);	/* 16mA */
+		/*Begin-LiuXin-20151103-modify ISINK3 to ISINK 0 for HW requirement*/
+		pmic_set_register_value(PMIC_ISINK_CH3_STEP, ISINK_0);	/* 4mA,old:16mA */
+		/*End-LiuXin-20151103-modify ISINK3 to ISINK 0 for HW requirement*/
 		pmic_set_register_value(PMIC_ISINK_DIM3_DUTY, duty);
 		pmic_set_register_value(PMIC_ISINK_DIM3_FSEL, pmic_freqsel_array[time_index]);
 		pmic_set_register_value(PMIC_ISINK_CH3_EN, NLED_ON);
 		break;
 	default:
-		LEDS_DEBUG("[LEDS] pmic_type %d is not handled\n", pmic_type);
 		break;
 	}
 	return 0;
@@ -914,7 +915,9 @@ int mt_brightness_set_pmic(enum mt65xx_led_pmic pmic_type, u32 level, u32 div)
 		pmic_set_register_value(PMIC_RG_ISINK3_CK_PDN, 0);
 		pmic_set_register_value(PMIC_RG_ISINK3_CK_SEL, 0);
 		pmic_set_register_value(PMIC_ISINK_CH3_MODE, ISINK_PWM_MODE);
-		pmic_set_register_value(PMIC_ISINK_CH3_STEP, ISINK_3);	/* 16mA */
+		/*Begin-LiuXin-20151103-modify ISINK3 to ISINK 0 for HW requirement*/
+		pmic_set_register_value(PMIC_ISINK_CH3_STEP, ISINK_0);	/* 4mA,old:16mA */
+		/*End-LiuXin-20151103-modify ISINK3 to ISINK 0 for HW requirement*/
 		pmic_set_register_value(PMIC_ISINK_DIM3_DUTY, 15);
 		pmic_set_register_value(PMIC_ISINK_DIM3_FSEL, ISINK_1KHZ);	/* 1KHz */
 		if (level)
@@ -1015,6 +1018,13 @@ int mt_mt65xx_led_set_cust(struct cust_mt65xx_led *cust, int level)
 		if (strcmp(cust->name, "lcd-backlight") == 0)
 			bl_brightness_hal = level;
 		return ((cust_set_brightness) (cust->data)) (level);
+    
+    /*Begin ersen.shang for backlight control 20151029*/
+	case MT65XX_LED_MODE_CUST_BLIC:
+		if (strcmp(cust->name, "lcd-backlight") == 0)
+			bl_brightness_hal = level;
+		return disp_cust_set_backlight(level);
+    /*End   ersen.shang for backlight control 20151029*/
 
 	case MT65XX_LED_MODE_NONE:
 	default:
@@ -1143,6 +1153,7 @@ int mt_mt65xx_blink_set(struct led_classdev *led_cdev,
 				    led_data->delay_off;
 				nled_tmp_setting.blink_on_time =
 				    led_data->delay_on;
+				mdelay(1000);//liuxin modify for detect 957222,add 1000ms to delay blink function
 				mt_led_blink_pmic(led_data->cust.data,
 						  &nled_tmp_setting);
 				return 0;
