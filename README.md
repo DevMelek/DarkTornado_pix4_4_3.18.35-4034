@@ -1,4 +1,4 @@
-DarkTornado v1.5 Kernel 3.18.35 For Alcatel One Touch POP 4(4) PIXI4-4
+DarkTornado v1.5 Kernel 3.18.35 For Alcatel One Touch PIXI 4(4) PIXI4-4
 
 ## Information
 | Subsystem | Driver name | Availability | Working |
