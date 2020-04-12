@@ -1012,7 +1012,7 @@ static unsigned int charging_full_check(void)
 
 	if (BMT_status.ICharging <= charging_full_current) {
 		full_check_count++;
-		if (3 == full_check_count) {
+		if (6 == full_check_count) {
 			status = KAL_TRUE;
 			full_check_count = 0;
 			battery_log(BAT_LOG_CRTI,
@@ -1167,7 +1167,7 @@ if (ta_check_ta_control == KAL_FALSE)
 	                    }
 	                   else
 	                   {
-	                      cv_voltage = BATTERY_VOLT_04_350000_V;         //modify by jiayu.ding for wingtech req
+	                      cv_voltage = BATTERY_VOLT_04_350000_V; 
 				  battery_log(BAT_LOG_CRTI,
 				    "[BATTERY] pchr_turn_on_charging,set CV to 4.35V \r\n");
 	                    }
@@ -1256,7 +1256,7 @@ PMU_STATUS BAT_ConstantCurrentModeAction(void)
 
 		/* Charging 9s and discharging 1s : start */
 		battery_charging_control(CHARGING_CMD_ENABLE, &charging_enable);
-		msleep(1000);  //modify by jiayu.ding
+		msleep(1000);
 	}
 #endif
 
@@ -1274,7 +1274,7 @@ PMU_STATUS BAT_TopOffModeAction(void)
 	unsigned int cv_voltage;
 
 	if (batt_cust_data.high_battery_voltage_support)
-		cv_voltage = 4350;   //modify by jiayu.ding for wingtech req
+		cv_voltage = 4350;
 	else
 		cv_voltage = 4200;
 

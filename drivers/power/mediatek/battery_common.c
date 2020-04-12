@@ -75,8 +75,6 @@
 #include <mach/mt_pmic.h>
 
 
-#define HIGH_BATTERY_VOLTAGE_SUPPORT
-
 #if defined(CONFIG_MTK_DUAL_INPUT_CHARGER_SUPPORT)
 #include <mach/diso.h>
 #endif
@@ -141,7 +139,6 @@ kal_bool g_charging_full_reset_bat_meter = KAL_FALSE;
 int g_platform_boot_mode = 0;
 struct timespec g_bat_time_before_sleep;
 int g_smartbook_update = 0;
-
 #if defined(CONFIG_MTK_DUAL_INPUT_CHARGER_SUPPORT)
 kal_bool g_vcdt_irq_delay_flag = 0;
 #endif
@@ -765,12 +762,12 @@ static DEVICE_ATTR(ADC_Charger_Voltage, 0664, show_ADC_Charger_Voltage, store_AD
 ///////////////////////////////////////////////////////////////////////////////////////////
 static ssize_t show_I_Charging(struct device *dev,struct device_attribute *attr, char *buf)
 {
-    //begin-20160315-yuduan.xie-add-for-Charge-Task 1813965
+    //begin-20160315-yuduan.xie-add-for-Charge-Task 1800942
     signed int ICharging=0;
     ICharging = battery_meter_get_charging_current();
     //xlog_printk(ANDROID_LOG_INFO, "Power/Battery", "[EM] I_Charging : %d\n", BMT_status.ICharging);
     return sprintf(buf, "%d\n", ICharging);
-    //end-20160315-yuduan.xie-add-for-Charge-Task 1813965
+    //end-20160315-yuduan.xie-add-for-Charge-Task 1800942
 }
 static ssize_t store_I_Charging(struct device *dev,struct device_attribute *attr, const char *buf, size_t size)
 {
