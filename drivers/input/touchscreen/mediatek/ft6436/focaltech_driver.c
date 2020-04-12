@@ -131,6 +131,7 @@ struct Upgrade_Info fts_updateinfo_curr;
 /*Begin xiaopu.zhu for add 3nd ctp */
 CTP_VENDOR  tpd_vendor_id=CTP_VENDOR_UNDEFINED; 
 /*End   xiaopu.zhu for add 3nd ctp */
+extern unsigned char tp_project_id; //20160809 add by liujunting for 3rd TP:FT6336U
 static DECLARE_WAIT_QUEUE_HEAD(waiter);
 static DEFINE_MUTEX(i2c_access); 
 static DEFINE_MUTEX(i2c_rw_access);
@@ -560,15 +561,24 @@ void focaltech_get_upgrade_array(void)
 	fts_read_i2c(FTS_REG_CHIP_ID,&chip_id);
 	if(chip_id==0)
 	{
-		if(tpd_vendor_id == CTP_VENDOR_HOLTAI)
-	{
-               chip_id=0x36;
-	}
-	else if (tpd_vendor_id == CTP_VENDOR_GREEN)
-	{
+	    if(tpd_vendor_id == CTP_VENDOR_HOLTAI)
+	    {
+// begin 20160809 modify by liujunting for 3rd TP:FT6336U
+                if (tp_project_id == 0x30)
+                {
+                    chip_id=0x36;
+	        }
+	        else if (tp_project_id == 0x31)
+                {
+	            chip_id=0x64;
+	        }
+// end 20160809 modify by liujunting for 3rd TP:FT6336U
+	    }
+	    else if (tpd_vendor_id == CTP_VENDOR_GREEN)
+	    {
                chip_id=0x64;	
+	    }
 	}
-		}
 	printk("%s chip_id = %x\n", __func__, chip_id);
 
 	for(i=0;i<sizeof(fts_updateinfo)/sizeof(struct Upgrade_Info);i++)
@@ -1366,6 +1376,9 @@ extern u8 fts_ctpm_update_project_setting(struct i2c_client *client);
 		tpd_vendor_id = CTP_VENDOR_GREEN;
 	}
 		printk("mtk_tpd[FTS] tpd_vendor_id id is %X\n",tpd_vendor_id );
+		#if defined (CONFIG_HW_INFO)
+		tpd->tp_vendor_id=tpd_vendor_id; //20160226 liujunting add for hardwareinfo
+		#endif
 	/*End    xiaopu.zhu for add 3nd ctp 20160113*/
        uc_reg_addr = FTS_REG_POINT_RATE;				
 	//fts_i2c_Write(i2c_client, &uc_reg_addr, 1);

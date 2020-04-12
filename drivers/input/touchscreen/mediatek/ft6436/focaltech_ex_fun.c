@@ -22,7 +22,7 @@
 #include <linux/netdevice.h>
 #include <linux/proc_fs.h>
 #include "tpd_custom_fts.h"
-
+#include "tpd.h" //20160226 liujunting add for hardwareinfo
 
 
 int fts_6x36_ctpm_fw_upgrade(struct i2c_client *client, u8 *pbt_buf, u32 dw_lenth);
@@ -42,13 +42,20 @@ static unsigned char* CTPM_FW ;
 /*Begin ersen.shang 20160118 update fw to Pixi4_4_6336S_ID82_V13_20160112_app and Pixi4_4_6336U_IDa1_V10_20151008_app*/
 static unsigned char CTPM_FW_HOLTAI[]={
 	//#include "Pixi4_4_6336S_ID82_V12_20160108_app.i" 
-	  #include "Pixi4_4_6336S_ID82_V13_20160112_app.i"         
+	//#include "Pixi4_4_6336S_ID82_V13_20160112_app.i"
+         #include "Pixi4_4_6336S_ID82_V14_20160129_app.i"
 };
-
+//begin 20160809 add by liujunting for 3rd TP:FT6336U
+static unsigned char CTPM_FW_HOLTAI_FT6336U[]={
+	//#include "Pixi4_4_6336U_ID82_V11_20160627_app.i" 
+        #include "Pixi4_4_6336U_ID82_V30_20160812_app.i" 
+};
+//end 20160809 add by liujunting for 3rd TP:FT6336U
   /*Begin XIAOPU.ZHU for add 3nd ctp */	 
 static unsigned char CTPM_FW_GREEN[]={
 	//#include "Pixi4_4_6336U_IDa1_V10_20151008_app.i"
-	  #include "Pixi4_4_6336U_IDa1_V11_20160114_app.i"	
+	//#include "Pixi4_4_6336U_IDa1_V11_20160114_app.i"
+	#include "Pixi4_4_6336U_IDa1_V12_20160128_app.i"	
 };	
   /*End    XIAOPU.ZHU for add 3nd ctp  */
 /*End   ersen.shang 20160118 update fw to Pixi4_4_6336S_ID82_V13_20160112_app and Pixi4_4_6336U_IDa1_V10_20151008_app*/
@@ -57,6 +64,8 @@ static unsigned char CTPM_FW_GREEN[]={
 extern CTP_VENDOR tpd_vendor_id;
 /*End    XIAOPU.ZHU for add 3nd ctp */
 static struct mutex g_device_mutex;
+extern struct tpd_device  *tpd; //20160226 liujunting add for hardwareinfo
+unsigned char tp_project_id = 0;//20160809 add by liujunting for 3rd TP:FT6336U
 
 int fts_ctpm_auto_clb(struct i2c_client *client)
 {
@@ -120,10 +129,20 @@ int fts_ctpm_fw_upgrade_with_i_file(struct i2c_client *client)
 	* if illegal, then stop upgrade and return.
 	*/
 
-		if(tpd_vendor_id == CTP_VENDOR_HOLTAI)
+	if(tpd_vendor_id == CTP_VENDOR_HOLTAI)
 	{
-		fw_len = sizeof(CTPM_FW_HOLTAI);
-		CTPM_FW = CTPM_FW_HOLTAI;
+//begin 20160809 modify by liujunting for 3rd TP:FT6336U
+	      if (fts_updateinfo_curr.CHIP_ID == 0x36)
+	      {
+		     fw_len = sizeof(CTPM_FW_HOLTAI);
+		     CTPM_FW = CTPM_FW_HOLTAI;
+	      }
+		  else if (fts_updateinfo_curr.CHIP_ID == 0x64)
+	      {
+             fw_len = sizeof(CTPM_FW_HOLTAI_FT6336U);
+		     CTPM_FW = CTPM_FW_HOLTAI_FT6336U;
+		  }
+//end 20160809 modify by liujunting for 3rd TP:FT6336U
 	}
 	else if (tpd_vendor_id == CTP_VENDOR_GREEN)
 	{
@@ -224,10 +243,21 @@ int fts_ctpm_fw_upgrade_with_i_file(struct i2c_client *client)
 u8 fts_ctpm_get_i_file_ver(void)
 {
 	u16 ui_sz;
-		if(tpd_vendor_id == CTP_VENDOR_HOLTAI)
+	if(tpd_vendor_id == CTP_VENDOR_HOLTAI)
 	{
-		ui_sz = sizeof(CTPM_FW_HOLTAI);
-		CTPM_FW = CTPM_FW_HOLTAI;
+//begin 20160809 modify by liujunting for 3rd TP:FT6336U
+		if (fts_updateinfo_curr.CHIP_ID==0x36)
+		{
+		    ui_sz = sizeof(CTPM_FW_HOLTAI);
+		    CTPM_FW = CTPM_FW_HOLTAI;
+		}
+		else if (fts_updateinfo_curr.CHIP_ID==0x64)
+		{
+            ui_sz = sizeof(CTPM_FW_HOLTAI_FT6336U);
+		    CTPM_FW = CTPM_FW_HOLTAI_FT6336U;
+            printk("*******fts_ctpm_get_i_file_ver:ljt******\n");
+		}
+//end 20160809 modify by liujunting for 3rd TP:FT6336U
 	}
 	else if (tpd_vendor_id == CTP_VENDOR_GREEN)
 	{
@@ -257,7 +287,7 @@ u8 fts_ctpm_update_project_setting(struct i2c_client *client)
 	u8 buf[FTS_SETTING_BUF_LEN];
 	u8 reg_val[2] = {0};
 	u8 auc_i2c_write_buf[10] = {0};
-	u8 packet_buf[FTS_SETTING_BUF_LEN + 6];
+	//u8 packet_buf[FTS_SETTING_BUF_LEN + 6];  //20160809 modify by liujunting for 3rd TP:FT6336U
 	u8 retVal=0;
 	u32 i = 0;
 
@@ -326,6 +356,15 @@ u8 fts_ctpm_update_project_setting(struct i2c_client *client)
 			uc_io_voltage = %d, uc_panel_factory_id = 0x%x\n",
 			buf[0], buf[2], buf[4]);
 	retVal=buf[4];
+//begin 20160809 add by liujunting for 3rd TP:FT6336U
+	buf[0] = 0x3;
+	buf[1] = 0x0;
+	buf[2] = 0x7;
+	buf[3] = 0xf0;
+	fts_i2c_Read(client, buf, 4, buf, 4);
+	tp_project_id = buf[3];
+#if 0	
+//end 20160809 add by liujunting for 3rd TP:FT6336U
 	 /*--------- Step 4:erase project setting --------------*/
 	auc_i2c_write_buf[0] = 0x63;
 	fts_i2c_Write(client, auc_i2c_write_buf, 1);
@@ -354,7 +393,7 @@ u8 fts_ctpm_update_project_setting(struct i2c_client *client)
 	fts_i2c_Read(client, auc_i2c_write_buf, 1, reg_val, 1);
 	dev_dbg(&client->dev, "bootloader version = 0x%x\n", reg_val[0]);
 		DBG( "bootloader version = 0x%x\n", reg_val[0]);
-
+#endif   //20160809 add by liujunting for 3rd TP:FT6336U
 	/********* reset the new FW***********************/
 	auc_i2c_write_buf[0] = 0x07;
 	fts_i2c_Write(client, auc_i2c_write_buf, 1);
@@ -371,6 +410,9 @@ int fts_ctpm_auto_upgrade(struct i2c_client *client)
 	int i_ret;
 
 	fts_read_reg(client, FTS_REG_FW_VER, &uc_tp_fm_ver);
+	#if defined (CONFIG_HW_INFO)
+	tpd->tp_firmware_version=uc_tp_fm_ver;//20160226 liujunting add for hardwareinfo
+	#endif
 	uc_host_fm_ver = fts_ctpm_get_i_file_ver();
 	printk("*******fts_ctpm_auto_upgrade:0x%x.0x%x******\n",uc_tp_fm_ver,uc_host_fm_ver);
 

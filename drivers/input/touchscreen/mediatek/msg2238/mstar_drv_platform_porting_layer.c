@@ -34,6 +34,20 @@
 #include "mstar_drv_utility_adaption.h"
 #include "mstar_drv_main.h"
 
+//begin-add for close debug log by liuxin
+#define DEBUG_SWITCH 0
+
+#if DEBUG_SWITCH
+#define GSE_TAG				  "[Msg22xx] "
+#define GSE_ERR(fmt, args...)	pr_err(GSE_TAG fmt, ##args)
+#define GSE_LOG(fmt, args...)	pr_debug(GSE_TAG fmt, ##args)
+#else
+#define GSE_TAG
+#define GSE_ERR(fmt, args...)	do {} while (0)
+#define GSE_LOG(fmt, args...)	do {} while (0)
+#endif
+//end-add for close debug log by liuxin
+
 #ifdef CONFIG_ENABLE_HOTKNOT
 #include "mstar_drv_hotknot_queue.h"
 #endif //CONFIG_ENABLE_HOTKNOT
@@ -134,13 +148,13 @@ static void _DrvPlatformLyrFingerTouchDoWork(struct work_struct *pWork)
 {
     unsigned long nIrqFlag;
 
-    DBG("*** %s() ***\n", __func__);
+    GSE_LOG("*** %s() ***\n", __func__);
 
     DrvIcFwLyrHandleFingerTouch(NULL, 0);
 
-    DBG("*** %s() _gInterruptFlag = %d ***\n", __func__, _gInterruptFlag);  // add for debug
+    GSE_LOG("*** %s() _gInterruptFlag = %d ***\n", __func__, _gInterruptFlag);  // add for debug
 
-//    DBG("*** %s() spin_lock_irqsave() ***\n", __func__);  // add for debug
+    GSE_LOG("*** %s() spin_lock_irqsave() ***\n", __func__);  // add for debug
     spin_lock_irqsave(&_gIrqLock, nIrqFlag);
 
 #if defined(CONFIG_TOUCH_DRIVER_RUN_ON_SPRD_PLATFORM) || defined(CONFIG_TOUCH_DRIVER_RUN_ON_QCOM_PLATFORM)
@@ -148,7 +162,7 @@ static void _DrvPlatformLyrFingerTouchDoWork(struct work_struct *pWork)
     if (_gInterruptFlag == 0) 
     {
         enable_irq(_gIrq);
-//        DBG("*** %s() enable_irq(_gIrq) ***\n", __func__);  // add for debug
+        GSE_LOG("*** %s() enable_irq(_gIrq) ***\n", __func__);  // add for debug
 
         _gInterruptFlag = 1;
     } 
@@ -158,7 +172,7 @@ static void _DrvPlatformLyrFingerTouchDoWork(struct work_struct *pWork)
     if (_gInterruptFlag == 0) 
     {
       //  mt_eint_unmask(CUST_EINT_TOUCH_PANEL_NUM);
-//        DBG("*** %s() mt_eint_unmask(CUST_EINT_TOUCH_PANEL_NUM) ***\n", __func__);  // add for debug
+        GSE_LOG("*** %s() mt_eint_unmask(CUST_EINT_TOUCH_PANEL_NUM) ***\n", __func__);  // add for debug
         enable_irq(touch_irq);
         _gInterruptFlag = 1;
     }
@@ -166,7 +180,7 @@ static void _DrvPlatformLyrFingerTouchDoWork(struct work_struct *pWork)
 #endif
 
     spin_unlock_irqrestore(&_gIrqLock, nIrqFlag);
-//    DBG("*** %s() spin_unlock_irqrestore() ***\n", __func__);  // add for debug
+    GSE_LOG("*** %s() spin_unlock_irqrestore() ***\n", __func__);  // add for debug
 }
 #endif
 #if defined(CONFIG_TOUCH_DRIVER_RUN_ON_SPRD_PLATFORM) || defined(CONFIG_TOUCH_DRIVER_RUN_ON_QCOM_PLATFORM)
@@ -175,17 +189,17 @@ static irqreturn_t _DrvPlatformLyrFingerTouchInterruptHandler(s32 nIrq, void *pD
 {
     unsigned long nIrqFlag;
 
-    DBG("*** %s() ***\n", __func__);
+    GSE_LOG("*** %s() ***\n", __func__);
 
-    DBG("*** %s() _gInterruptFlag = %d ***\n", __func__, _gInterruptFlag);  // add for debug
+    GSE_LOG("*** %s() _gInterruptFlag = %d ***\n", __func__, _gInterruptFlag);  // add for debug
 
-//    DBG("*** %s() spin_lock_irqsave() ***\n", __func__);  // add for debug
+    GSE_LOG("*** %s() spin_lock_irqsave() ***\n", __func__);  // add for debug
     spin_lock_irqsave(&_gIrqLock, nIrqFlag);
 
     if (_gInterruptFlag == 1) 
     {
         disable_irq_nosync(_gIrq);
-//        DBG("*** %s() disable_irq_nosync(_gIrq) ***\n", __func__);  // add for debug
+        GSE_LOG("*** %s() disable_irq_nosync(_gIrq) ***\n", __func__);  // add for debug
 
         _gInterruptFlag = 0;
 
@@ -193,7 +207,7 @@ static irqreturn_t _DrvPlatformLyrFingerTouchInterruptHandler(s32 nIrq, void *pD
     }
 
     spin_unlock_irqrestore(&_gIrqLock, nIrqFlag);
-//    DBG("*** %s() spin_unlock_irqrestore() ***\n", __func__);  // add for debug
+    GSE_LOG("*** %s() spin_unlock_irqrestore() ***\n", __func__);  // add for debug
     
     return IRQ_HANDLED;
 }
@@ -202,11 +216,11 @@ static irqreturn_t _DrvPlatformLyrFingerTouchInterruptHandler(s32 nIrq, void *pD
 {
     unsigned long nIrqFlag;
 
-    DBG("*** %s() ***\n", __func__);  
+    GSE_LOG("*** %s() ***\n", __func__);  
 
-    DBG("*** %s() _gInterruptFlag = %d ***\n", __func__, _gInterruptFlag);  // add for debug
+    GSE_LOG("*** %s() _gInterruptFlag = %d ***\n", __func__, _gInterruptFlag);  // add for debug
 
-//    DBG("*** %s() spin_lock_irqsave() ***\n", __func__);  // add for debug
+    GSE_LOG("*** %s() spin_lock_irqsave() ***\n", __func__);  // add for debug
     spin_lock_irqsave(&_gIrqLock, nIrqFlag);
 
 #ifdef CONFIG_USE_IRQ_INTERRUPT_FOR_MTK_PLATFORM
@@ -214,8 +228,8 @@ static irqreturn_t _DrvPlatformLyrFingerTouchInterruptHandler(s32 nIrq, void *pD
     if (_gInterruptFlag == 1)
     {
      //  mt_eint_mask(CUST_EINT_TOUCH_PANEL_NUM);
-      disable_irq_nosync(touch_irq);
-//        DBG("*** %s() mt_eint_mask(CUST_EINT_TOUCH_PANEL_NUM) ***\n", __func__);  // add for debug
+       disable_irq_nosync(touch_irq);
+        GSE_LOG("*** %s() mt_eint_mask(CUST_EINT_TOUCH_PANEL_NUM) ***\n", __func__);  // add for debug
 
         _gInterruptFlag = 0;
 
@@ -227,7 +241,7 @@ static irqreturn_t _DrvPlatformLyrFingerTouchInterruptHandler(s32 nIrq, void *pD
     if (_gInterruptFlag == 1) 
     {    
       //  mt_eint_mask(CUST_EINT_TOUCH_PANEL_NUM);
-//        DBG("*** %s() mt_eint_mask(CUST_EINT_TOUCH_PANEL_NUM) ***\n", __func__);  // add for debug
+        GSE_LOG("*** %s() mt_eint_mask(CUST_EINT_TOUCH_PANEL_NUM) ***\n", __func__);  // add for debug
 		disable_irq_nosync(touch_irq);
         _gInterruptFlag = 0;
 
@@ -237,7 +251,7 @@ static irqreturn_t _DrvPlatformLyrFingerTouchInterruptHandler(s32 nIrq, void *pD
 #endif //CONFIG_USE_IRQ_INTERRUPT_FOR_MTK_PLATFORM
 
     spin_unlock_irqrestore(&_gIrqLock, nIrqFlag);
-//    DBG("*** %s() spin_unlock_irqrestore() ***\n", __func__);  // add for debug
+    GSE_LOG("*** %s() spin_unlock_irqrestore() ***\n", __func__);  // add for debug
   return IRQ_HANDLED;
 }
 
@@ -248,7 +262,7 @@ static int _DrvPlatformLyrFingerTouchHandler(void *pUnUsed)
     struct sched_param param = { .sched_priority = RTPM_PRIO_TPD };
     sched_setscheduler(current, SCHED_RR, &param);
 
-    DBG("*** %s() ***\n", __func__);  
+    GSE_LOG("*** %s() ***\n", __func__);  
 	
     do
     {
@@ -260,21 +274,21 @@ static int _DrvPlatformLyrFingerTouchHandler(void *pUnUsed)
 
         DrvIcFwLyrHandleFingerTouch(NULL, 0);
 
-        DBG("*** %s() _gInterruptFlag = %d ***\n", __func__, _gInterruptFlag);  // add for debug
+        GSE_LOG("*** %s() _gInterruptFlag = %d ***\n", __func__, _gInterruptFlag);  // add for debug
 
-//        DBG("*** %s() spin_lock_irqsave() ***\n", __func__);  // add for debug
+        GSE_LOG("*** %s() spin_lock_irqsave() ***\n", __func__);  // add for debug
         spin_lock_irqsave(&_gIrqLock, nIrqFlag);
 
         if (_gInterruptFlag == 0)        
         {
            // mt_eint_unmask(CUST_EINT_TOUCH_PANEL_NUM);
-//            DBG("*** %s() mt_eint_unmask(CUST_EINT_TOUCH_PANEL_NUM) ***\n", __func__);  // add for debug
+            GSE_LOG("*** %s() mt_eint_unmask(CUST_EINT_TOUCH_PANEL_NUM) ***\n", __func__);  // add for debug
 		enable_irq(touch_irq);
             _gInterruptFlag = 1;
         } 
 
         spin_unlock_irqrestore(&_gIrqLock, nIrqFlag);
-//        DBG("*** %s() spin_unlock_irqrestore() ***\n", __func__);  // add for debug
+        GSE_LOG("*** %s() spin_unlock_irqrestore() ***\n", __func__);  // add for debug
 		
     } while (!kthread_should_stop());
 	
@@ -290,7 +304,7 @@ void DrvIcFwLyrIsRegisterFingerTouchInterruptHandler(void)
 	struct device_node *node = NULL;
 	int ret = 0;
 	u32 ints[2] = { 0, 0 };
-       DBG("*** %s() ***\n", __func__);
+       GSE_LOG("*** %s() ***\n", __func__);
 	  node = of_find_matching_node(node, touch_of_match);
 	if (node) {
 		of_property_read_u32_array(node, "debounce", ints, ARRAY_SIZE(ints));
@@ -320,20 +334,20 @@ void DrvPlatformLyrTouchDeviceRegulatorPowerOn(void)
 #if defined(CONFIG_TOUCH_DRIVER_RUN_ON_SPRD_PLATFORM) || defined(CONFIG_TOUCH_DRIVER_RUN_ON_QCOM_PLATFORM)
     s32 nRetVal = 0;
 
-    DBG("*** %s() ***\n", __func__);
+    GSE_LOG("*** %s() ***\n", __func__);
     
     nRetVal = regulator_set_voltage(g_ReguVdd, 2800000, 2800000); // For specific SPRD BB chip(ex. SC7715) or QCOM BB chip(ex. MSM8610), need to enable this function call for correctly power on Touch IC.
 
     if (nRetVal)
     {
-        DBG("Could not set to 2800mv.\n");
+        GSE_LOG("Could not set to 2800mv.\n");
     }
     regulator_enable(g_ReguVdd);
 
     mdelay(20);
 #elif defined(CONFIG_TOUCH_DRIVER_RUN_ON_MTK_PLATFORM)
     s32 nRetVal = 0;
-    DBG("*** %s() ***\n", __func__);
+    GSE_LOG("*** %s() ***\n", __func__);
    // hwPowerOn(MT6323_POWER_LDO_VGP1, VOL_2800, "TP"); // For specific MTK BB chip(ex. MT6582), need to enable this function call for correctly power on Touch IC.
   //hwPowerOn(MT6325_POWER_LDO_VGP1, VOL_2800, "TP");  // For specific MTK BB chip(ex. MT6735), need to enable this function call for correctly power on Touch IC.
 	if(tpd->reg==NULL)
@@ -345,7 +359,7 @@ void DrvPlatformLyrTouchDeviceRegulatorPowerOn(void)
    //  nRetVal = regulator_set_voltage(g_ReguVdd, 2800000, 2800000);
 	if (nRetVal)
     {
-        DBG("Could not set to 2800mv.\n");
+        GSE_LOG("Could not set to 2800mv.\n");
     }
   printk(" TPD DrvPlatformLyrTouchDeviceRegulatorPowerOn regulator_set_voltage ok !\n");
     nRetVal = regulator_enable(tpd->reg);
@@ -356,7 +370,7 @@ void DrvPlatformLyrTouchDeviceRegulatorPowerOn(void)
 
 void DrvPlatformLyrTouchDevicePowerOn(void)
 {
-    DBG("*** %s() ***\n", __func__);
+    GSE_LOG("*** %s() ***\n", __func__);
     
 #if defined(CONFIG_TOUCH_DRIVER_RUN_ON_SPRD_PLATFORM) || defined(CONFIG_TOUCH_DRIVER_RUN_ON_QCOM_PLATFORM)
     gpio_direction_output(MS_TS_MSG_IC_GPIO_RST, 1);
@@ -401,7 +415,7 @@ void DrvPlatformLyrTouchDevicePowerOn(void)
 
 void DrvPlatformLyrTouchDevicePowerOff(void)
 {
-    DBG("*** %s() ***\n", __func__);
+    GSE_LOG("*** %s() ***\n", __func__);
     
     DrvIcFwLyrOptimizeCurrentConsumption();
 
@@ -423,7 +437,7 @@ void DrvPlatformLyrTouchDevicePowerOff(void)
 
 void DrvPlatformLyrTouchDeviceResetHw(void)
 {
-    DBG("*** %s() ***\n", __func__);
+    GSE_LOG("*** %s() ***\n", __func__);
     
 #if defined(CONFIG_TOUCH_DRIVER_RUN_ON_SPRD_PLATFORM) || defined(CONFIG_TOUCH_DRIVER_RUN_ON_QCOM_PLATFORM)
     gpio_direction_output(MS_TS_MSG_IC_GPIO_RST, 1);
@@ -463,11 +477,11 @@ void DrvPlatformLyrDisableFingerTouchReport(void)
 {
     unsigned long nIrqFlag;
 
-    DBG("*** %s() ***\n", __func__);
+    GSE_LOG("*** %s() ***\n", __func__);
 
-    DBG("*** %s() _gInterruptFlag = %d ***\n", __func__, _gInterruptFlag);  // add for debug
+    GSE_LOG("*** %s() _gInterruptFlag = %d ***\n", __func__, _gInterruptFlag);  // add for debug
 
-//    DBG("*** %s() spin_lock_irqsave() ***\n", __func__);  // add for debug
+    GSE_LOG("*** %s() spin_lock_irqsave() ***\n", __func__);  // add for debug
     spin_lock_irqsave(&_gIrqLock, nIrqFlag);
 
 #if defined(CONFIG_TOUCH_DRIVER_RUN_ON_SPRD_PLATFORM) || defined(CONFIG_TOUCH_DRIVER_RUN_ON_QCOM_PLATFORM)
@@ -479,7 +493,7 @@ void DrvPlatformLyrDisableFingerTouchReport(void)
         if (_gInterruptFlag == 1)  
         {
             disable_irq(_gIrq);
-//            DBG("*** %s() disable_irq(_gIrq) ***\n", __func__);  // add for debug
+            GSE_LOG("*** %s() disable_irq(_gIrq) ***\n", __func__);  // add for debug
 
             _gInterruptFlag = 0;
         }
@@ -493,7 +507,7 @@ void DrvPlatformLyrDisableFingerTouchReport(void)
         if (_gInterruptFlag == 1) 
         {
            // mt_eint_mask(CUST_EINT_TOUCH_PANEL_NUM);
-//            DBG("*** %s() mt_eint_mask(CUST_EINT_TOUCH_PANEL_NUM) ***\n", __func__);  // add for debug
+            GSE_LOG("*** %s() mt_eint_mask(CUST_EINT_TOUCH_PANEL_NUM) ***\n", __func__);  // add for debug
             disable_irq_nosync(touch_irq);
             _gInterruptFlag = 0;
         }
@@ -501,18 +515,18 @@ void DrvPlatformLyrDisableFingerTouchReport(void)
 #endif
 
     spin_unlock_irqrestore(&_gIrqLock, nIrqFlag);
-//    DBG("*** %s() spin_unlock_irqrestore() ***\n", __func__);  // add for debug
+    GSE_LOG("*** %s() spin_unlock_irqrestore() ***\n", __func__);  // add for debug
 }
 
 void DrvPlatformLyrEnableFingerTouchReport(void)
 {
     unsigned long nIrqFlag;
 
-    DBG("*** %s() ***\n", __func__);
+    GSE_LOG("*** %s() ***\n", __func__);
 
-    DBG("*** %s() _gInterruptFlag = %d ***\n", __func__, _gInterruptFlag);  // add for debug
+    GSE_LOG("*** %s() _gInterruptFlag = %d ***\n", __func__, _gInterruptFlag);  // add for debug
 
-//    DBG("*** %s() spin_lock_irqsave() ***\n", __func__);  // add for debug
+    GSE_LOG("*** %s() spin_lock_irqsave() ***\n", __func__);  // add for debug
     spin_lock_irqsave(&_gIrqLock, nIrqFlag);
 
 #if defined(CONFIG_TOUCH_DRIVER_RUN_ON_SPRD_PLATFORM) || defined(CONFIG_TOUCH_DRIVER_RUN_ON_QCOM_PLATFORM)
@@ -520,7 +534,7 @@ void DrvPlatformLyrEnableFingerTouchReport(void)
     if (_gInterruptFlag == 0) 
     {
         enable_irq(_gIrq);
-//        DBG("*** %s() enable_irq(_gIrq) ***\n", __func__);  // add for debug
+        GSE_LOG("*** %s() enable_irq(_gIrq) ***\n", __func__);  // add for debug
 
         _gInterruptFlag = 1;        
     }
@@ -530,7 +544,7 @@ void DrvPlatformLyrEnableFingerTouchReport(void)
     if (_gInterruptFlag == 0) 
     {
      //   mt_eint_unmask(CUST_EINT_TOUCH_PANEL_NUM);
-//        DBG("*** %s() mt_eint_unmask(CUST_EINT_TOUCH_PANEL_NUM) ***\n", __func__);  // add for debug
+        GSE_LOG("*** %s() mt_eint_unmask(CUST_EINT_TOUCH_PANEL_NUM) ***\n", __func__);  // add for debug
 enable_irq(touch_irq);
         _gInterruptFlag = 1;        
     }
@@ -538,12 +552,12 @@ enable_irq(touch_irq);
 #endif
 
     spin_unlock_irqrestore(&_gIrqLock, nIrqFlag);
-//    DBG("*** %s() spin_unlock_irqrestore() ***\n", __func__);  // add for debug
+    GSE_LOG("*** %s() spin_unlock_irqrestore() ***\n", __func__);  // add for debug
 }
 
 void DrvPlatformLyrFingerTouchPressed(s32 nX, s32 nY, s32 nPressure, s32 nId)
 {
-    DBG("*** %s() ***\n", __func__);
+    GSE_LOG("*** %s() ***\n", __func__);
     DBG("point touch pressed\n");
 
 #ifdef CONFIG_ENABLE_TYPE_B_PROTOCOL // TYPE B PROTOCOL
@@ -556,7 +570,7 @@ void DrvPlatformLyrFingerTouchPressed(s32 nX, s32 nY, s32 nPressure, s32 nId)
     input_report_abs(g_InputDevice, ABS_MT_POSITION_X, nX);
     input_report_abs(g_InputDevice, ABS_MT_POSITION_Y, nY);
 
-//    DBG("nId=%d, nX=%d, nY=%d\n", nId, nX, nY); // TODO : add for debug
+    GSE_LOG("nId=%d, nX=%d, nY=%d\n", nId, nX, nY); // TODO : add for debug
 #else // TYPE A PROTOCOL
     input_report_key(g_InputDevice, BTN_TOUCH, 1);
 #if defined(CONFIG_ENABLE_TOUCH_DRIVER_FOR_MUTUAL_IC)
@@ -585,7 +599,7 @@ void DrvPlatformLyrFingerTouchPressed(s32 nX, s32 nY, s32 nPressure, s32 nId)
 
 void DrvPlatformLyrFingerTouchReleased(s32 nX, s32 nY, s32 nId)
 {
-    DBG("*** %s() ***\n", __func__);
+    GSE_LOG("*** %s() ***\n", __func__);
     DBG("point touch released\n");
 
 #ifdef CONFIG_ENABLE_TYPE_B_PROTOCOL // TYPE B PROTOCOL
@@ -594,7 +608,7 @@ void DrvPlatformLyrFingerTouchReleased(s32 nX, s32 nY, s32 nId)
 //    input_report_abs(g_InputDevice, ABS_MT_TRACKING_ID, -1);
     input_mt_report_slot_state(g_InputDevice, MT_TOOL_FINGER, false);
 
-//    DBG("nId=%d\n", nId); // TODO : add for debug
+    GSE_LOG("nId=%d\n", nId); // TODO : add for debug
 #else // TYPE A PROTOCOL
     input_report_key(g_InputDevice, BTN_TOUCH, 0);
     input_mt_sync(g_InputDevice);
@@ -618,7 +632,7 @@ s32 DrvPlatformLyrInputDeviceInitialize(struct i2c_client *pClient)
 {
     s32 nRetVal = 0;
 
-    DBG("*** %s() ***\n", __func__);
+    GSE_LOG("*** %s() ***\n", __func__);
 
     mutex_init(&g_Mutex);
     spin_lock_init(&_gIrqLock);
@@ -628,7 +642,7 @@ s32 DrvPlatformLyrInputDeviceInitialize(struct i2c_client *pClient)
     g_InputDevice = input_allocate_device();
     if (g_InputDevice == NULL)
     {
-        DBG("*** input device allocation failed ***\n");
+        GSE_LOG("*** input device allocation failed ***\n");
         return -ENOMEM;
     }
 
@@ -699,7 +713,7 @@ s32 DrvPlatformLyrInputDeviceInitialize(struct i2c_client *pClient)
     nRetVal = input_register_device(g_InputDevice);
     if (nRetVal < 0)
     {
-        DBG("*** Unable to register touch input device ***\n");
+        GSE_LOG("*** Unable to register touch input device ***\n");
     }
 #elif defined(CONFIG_TOUCH_DRIVER_RUN_ON_MTK_PLATFORM)
     g_InputDevice = tpd->dev;
@@ -768,19 +782,19 @@ s32 DrvPlatformLyrTouchDeviceRequestGPIO(void)
 {
     s32 nRetVal = 0;
 
-    DBG("*** %s() ***\n", __func__);
+    GSE_LOG("*** %s() ***\n", __func__);
     
 #if defined(CONFIG_TOUCH_DRIVER_RUN_ON_SPRD_PLATFORM) || defined(CONFIG_TOUCH_DRIVER_RUN_ON_QCOM_PLATFORM)
     nRetVal = gpio_request(MS_TS_MSG_IC_GPIO_RST, "C_TP_RST");     
     if (nRetVal < 0)
     {
-        DBG("*** Failed to request GPIO %d, error %d ***\n", MS_TS_MSG_IC_GPIO_RST, nRetVal);
+        GSE_LOG("*** Failed to request GPIO %d, error %d ***\n", MS_TS_MSG_IC_GPIO_RST, nRetVal);
     }
 
     nRetVal = gpio_request(MS_TS_MSG_IC_GPIO_INT, "C_TP_INT");    
     if (nRetVal < 0)
     {
-        DBG("*** Failed to request GPIO %d, error %d ***\n", MS_TS_MSG_IC_GPIO_INT, nRetVal);
+        GSE_LOG("*** Failed to request GPIO %d, error %d ***\n", MS_TS_MSG_IC_GPIO_INT, nRetVal);
     }
 #endif
 
@@ -791,7 +805,7 @@ s32 DrvPlatformLyrTouchDeviceRegisterFingerTouchInterruptHandler(void)
 {
     s32 nRetVal = 0;
 
-    DBG("*** %s() ***\n", __func__);
+    GSE_LOG("*** %s() ***\n", __func__);
 
     if (1)
     {    	
@@ -814,7 +828,7 @@ s32 DrvPlatformLyrTouchDeviceRegisterFingerTouchInterruptHandler(void)
         
         if (nRetVal != 0)
         {
-            DBG("*** Unable to claim irq %d; error %d ***\n", MS_TS_MSG_IC_GPIO_INT, nRetVal);
+            GSE_LOG("*** Unable to claim irq %d; error %d ***\n", MS_TS_MSG_IC_GPIO_INT, nRetVal);
         }
 #elif defined(CONFIG_TOUCH_DRIVER_RUN_ON_MTK_PLATFORM)
 #if 0
@@ -840,7 +854,7 @@ s32 DrvPlatformLyrTouchDeviceRegisterFingerTouchInterruptHandler(void)
         if (IS_ERR(_gThread))
         { 
             nRetVal = PTR_ERR(_gThread);
-            DBG("Failed to create kernel thread: %d\n", nRetVal);
+            GSE_LOG("Failed to create kernel thread: %d\n", nRetVal);
         }
 #endif //CONFIG_USE_IRQ_INTERRUPT_FOR_MTK_PLATFORM
 #endif
@@ -851,7 +865,7 @@ s32 DrvPlatformLyrTouchDeviceRegisterFingerTouchInterruptHandler(void)
 #if 0
 void DrvPlatformLyrTouchDeviceRegisterEarlySuspend(void)
 {
-    DBG("*** %s() ***\n", __func__);
+    GSE_LOG("*** %s() ***\n", __func__);
 
 #if defined(CONFIG_TOUCH_DRIVER_RUN_ON_SPRD_PLATFORM) || defined(CONFIG_TOUCH_DRIVER_RUN_ON_QCOM_PLATFORM)
 #ifdef CONFIG_ENABLE_NOTIFIER_FB
@@ -869,7 +883,7 @@ void DrvPlatformLyrTouchDeviceRegisterEarlySuspend(void)
 /* remove function is triggered when the input device is removed from input sub-system */
 s32 DrvPlatformLyrTouchDeviceRemove(struct i2c_client *pClient)
 {
-    DBG("*** %s() ***\n", __func__);
+    GSE_LOG("*** %s() ***\n", __func__);
 
 #if defined(CONFIG_TOUCH_DRIVER_RUN_ON_SPRD_PLATFORM) || defined(CONFIG_TOUCH_DRIVER_RUN_ON_QCOM_PLATFORM)
     free_irq(_gIrq, g_InputDevice);
@@ -914,7 +928,7 @@ s32 DrvPlatformLyrTouchDeviceRemove(struct i2c_client *pClient)
 #ifdef CONFIG_ENABLE_HOTKNOT
     DeleteQueue();
     DeleteHotKnotMem();
-    DBG("Deregister hotknot misc device.\n");
+    GSE_LOG("Deregister hotknot misc device.\n");
     misc_deregister( &hotknot_miscdevice );   
 #endif //CONFIG_ENABLE_HOTKNOT
 
@@ -933,7 +947,7 @@ s32 DrvPlatformLyrTouchDeviceRemove(struct i2c_client *pClient)
 
 void DrvPlatformLyrSetIicDataRate(struct i2c_client *pClient, u32 nIicDataRate)
 {
-    DBG("*** %s() nIicDataRate = %d ***\n", __func__, nIicDataRate);
+    GSE_LOG("*** %s() nIicDataRate = %d ***\n", __func__, nIicDataRate);
 
 #if defined(CONFIG_TOUCH_DRIVER_RUN_ON_SPRD_PLATFORM)
     // TODO : Please FAE colleague to confirm with customer device driver engineer for how to set i2c data rate on SPRD platform
@@ -953,7 +967,7 @@ void DrvPlatformLyrSetIicDataRate(struct i2c_client *pClient, u32 nIicDataRate)
 /*Begin ersen.shang add parameters and modify the return value for cts verifier testBatchAndFlush Fail*/
 int DrvPlatformLyrGetTpPsData(int* value, int* status)
 {
-    DBG("*** %s() g_FaceClosingTp = %d ***\n", __func__, g_FaceClosingTp);
+    GSE_LOG("*** %s() g_FaceClosingTp = %d ***\n", __func__, g_FaceClosingTp);
 	
     //return g_FaceClosingTp;
     *value = g_FaceClosingTp;
@@ -965,7 +979,7 @@ int DrvPlatformLyrGetTpPsData(int* value, int* status)
 
 int msg22xx_pls_enable(int nEnable)
 {
-    DBG("*** %s() nEnable = %d ***\n", __func__, nEnable);
+    GSE_LOG("*** %s() nEnable = %d ***\n", __func__, nEnable);
 
     if (nEnable)
     {
@@ -988,7 +1002,7 @@ int get_msg22xx_data (int* value, int* status)
 #if defined(CONFIG_TOUCH_DRIVER_RUN_ON_SPRD_PLATFORM) || defined(CONFIG_TOUCH_DRIVER_RUN_ON_QCOM_PLATFORM)
 void DrvPlatformLyrTpPsEnable(int nEnable)
 {
-    DBG("*** %s() nEnable = %d ***\n", __func__, nEnable);
+    GSE_LOG("*** %s() nEnable = %d ***\n", __func__, nEnable);
 
     if (nEnable)
     {
@@ -1030,7 +1044,7 @@ int DrvPlatformLyrTpPsOperate(void* pSelf, u32 nCommand, void* pBuffIn, int nSiz
                 {
                     if (DrvIcFwLyrEnableProximity() < 0)
                     {
-                        DBG("Enable ps fail: %d\n", nErr);
+                        GSE_LOG("Enable ps fail: %d\n", nErr);
                         return -1;
                     }
                 }
@@ -1038,7 +1052,7 @@ int DrvPlatformLyrTpPsOperate(void* pSelf, u32 nCommand, void* pBuffIn, int nSiz
                 {
                     if (DrvIcFwLyrDisableProximity() < 0)
                     {
-                        DBG("Disable ps fail: %d\n", nErr);
+                        GSE_LOG("Disable ps fail: %d\n", nErr);
                         return -1;
                     }
                 }
@@ -1048,7 +1062,7 @@ int DrvPlatformLyrTpPsOperate(void* pSelf, u32 nCommand, void* pBuffIn, int nSiz
         case SENSOR_GET_DATA:
             if ((pBuffOut == NULL) || (nSizeOut < sizeof(hwm_sensor_data)))
             {
-                DBG("Get sensor data parameter error!\n");
+                GSE_LOG("Get sensor data parameter error!\n");
                 nErr = -EINVAL;
             }
             else
@@ -1062,7 +1076,7 @@ int DrvPlatformLyrTpPsOperate(void* pSelf, u32 nCommand, void* pBuffIn, int nSiz
             break;
 
        default:
-           DBG("Un-recognized parameter %d!\n", nCommand);
+           GSE_LOG("Un-recognized parameter %d!\n", nCommand);
            nErr = -1;
            break;
     }
